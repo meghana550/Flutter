@@ -1,0 +1,181 @@
+[10:16 pm, 08/08/2024] ....: [6:13 pm, 08/08/2024] ....: flutter create reminder_app
+cd reminder_app
+[6:14 pm, 08/08/2024] ....: reminder_app/
+|-- lib/
+    |-- main.dart
+|-- pubspec.yaml
+|-- android/
+|-- ios/
+|-- ...
+[6:14 pm, 08/08/2024] ....: dependencies:
+  flutter:
+    sdk: flutter
+  flutter_local_notifications: ^14.0.0
+[6:15 pm, 08/08/2024] ....: import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
+void main() {
+  runApp(ReminderApp());
+}
+
+class ReminderApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Reminder App',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: ReminderHomePage(),
+    );
+  }
+}
+
+class ReminderHomePage extends StatefulWidget {
+  @override
+  _ReminderHomePageState createState() => _ReminderHomePageState();
+}
+
+class _ReminderHomePageState extends State<ReminderHomePage> {
+  FlutterLocalNotificationsPlugin? localNotificationsPlugin;
+  String? selectedDay;
+  TimeOfDay? selectedTime;
+  String? selectedActivity;
+
+  final List<String> daysOfWeek = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday'
+  ];
+
+  final List<String> activities = [
+    'Wake up',
+    'Go to gym',
+    'Breakfast',
+    'Meetings',
+    'Lunch',
+    'Quick nap',
+    'Go to library',
+    'Dinner',
+    'Go to sleep'
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    var initializationSettingsAndroid =
+        AndroidInitializationSettings('app_icon');
+    var initializationSettingsIOS = IOSInitializationSettings();
+    var initializationSettings = InitializationSettings(
+        android: initializationSettingsAndroid, iOS: initializationSettingsIOS);
+
+    localNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    localNotificationsPlugin!.initialize(initializationSettings);
+  }
+
+  void scheduleNotification(TimeOfDay time, String activity) async {
+    var scheduledNotificationDateTime =
+        DateTime.now().add(Duration(hours: time.hour, minutes: time.minute));
+    var androidPlatformChannelSpecifics = AndroidNotificationDetails(
+        'your_channel_id', 'your_channel_name', 'your_channel_description',
+        importance: Importance.max, priority: Priority.high, ticker: 'ticker');
+    var iOSPlatformChannelSpecifics = IOSNotificationDetails();
+    var platformChannelSpecifics = NotificationDetails(
+        android: androidPlatformChannelSpecifics,
+        iOS: iOSPlatformChannelSpecifics);
+    await localNotificationsPlugin!.schedule(
+      0,
+      'Reminder',
+      activity,
+      scheduledNotificationDateTime,
+      platformChannelSpecifics,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Reminder App'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            DropdownButton<String>(
+              hint: Text('Select Day of the Week'),
+              value: selectedDay,
+              onChanged: (String? newValue) {
+                setState(() {
+                  selectedDay = newValue;
+                });
+              },
+              items: daysOfWeek.map((String day) {
+                return DropdownMenuItem<String>(
+                  value: day,
+                  child: Text(day),
+                );
+              }).toList(),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () async {
+                TimeOfDay? pickedTime = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay.now(),
+                );
+                if (pickedTime != null) {
+                  setState(() {
+                    selectedTime = pickedTime;
+                  });
+                }
+              },
+              child: Text(selectedTime != null
+                  ? '${selectedTime!.hour}:${selectedTime!.minute}'
+                  : 'Select Time'),
+            ),
+            SizedBox(height: 20),
+            DropdownButton<String>(
+              hint: Text('Select Activity'),
+              value: selectedActivity,
+              onChanged: (String? newValue) {
+                setState(() {
+                  selectedActivity = newValue;
+                });
+              },
+              items: activities.map((String activity) {
+                return DropdownMenuItem<String>(
+                  value: activity,
+                  child: Text(activity),
+                );
+              }).toList(),
+            ),
+            SizedBox(height: 40),
+            ElevatedButton(
+              onPressed: () {
+                if (selectedTime != null && selectedActivity != null) {
+                  scheduleNotification(selectedTime!, selectedActivity!);
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text(
+                          'Reminder set for $selectedActivity at ${selectedTime!.format(context)}')));
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text('Please select both time and activity')));
+                }
+              },
+              child: Text('Set Reminder'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+[6:15 pm, 08/08/2024] ....: flutter run
+[6:15 pm, 08/08/2024] ....: flutter build apk
+[11:07 pm, 08/08/2024] Prathyusha: 9032555094
